@@ -27,7 +27,8 @@ const mobileNavItems = [
 ];
 
 export function Sidebar() {
-  const { activeTab, setActiveTab, isDriveConnected } = useAcademicStore();
+  const pathname = usePathname();
+  const { isDriveConnected } = useAcademicStore();
   const [isCollapsed, setIsCollapsed, isHydrated] = useLocalStorage("sidebar-collapsed", false);
 
   if (!isHydrated) {
@@ -154,18 +155,12 @@ export function Sidebar() {
       {/* ── Nav Items ── */}
       <div className={`flex flex-col gap-1 flex-1 overflow-y-auto overflow-x-hidden ${isCollapsed ? 'px-1 items-center w-full mt-2' : 'px-3'}`}>
         {navItems.map((item) => {
-          const isActive = activeTab === item.href || (item.href !== "/dashboard" && activeTab.startsWith(item.href + "/"));
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
           return (
             <Link
               key={item.href}
               href={item.href}
               title={isCollapsed ? item.label : undefined}
-              onClick={(e) => {
-                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
-                  e.preventDefault();
-                  setActiveTab(item.href);
-                }
-              }}
               className={`nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? "active font-bold" : "hover:bg-gray-100"}`}
               style={isActive ? { background: "var(--color-primary-container)", color: "var(--color-on-primary-container)" } : { color: "var(--color-on-surface-variant)" }}
             >
@@ -186,13 +181,7 @@ export function Sidebar() {
         <Link 
           href="/settings" 
           title={isCollapsed ? "Settings" : undefined}
-          onClick={(e) => {
-            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
-              e.preventDefault();
-              setActiveTab("/settings");
-            }
-          }}
-          className={`nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-gray-100 ${activeTab.startsWith('/settings') ? 'active font-bold bg-gray-200' : ''}`}
+          className={`nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-gray-100 ${pathname.startsWith('/settings') ? 'active font-bold bg-gray-200' : ''}`}
           style={{ color: "var(--color-on-surface-variant)" }}
         >
           <span className="material-symbols-outlined shrink-0" style={{ fontSize: "20px" }}>settings</span>
@@ -248,7 +237,7 @@ export function MobileTopBar() {
 }
 
 export function MobileBottomNav() {
-  const { activeTab, setActiveTab } = useAcademicStore();
+  const pathname = usePathname();
   return (
     <nav
       className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-1 pb-safe pt-2"
@@ -261,17 +250,11 @@ export function MobileBottomNav() {
       }}
     >
       {mobileNavItems.map((item) => {
-        const isActive = activeTab === item.href || (item.href !== "/dashboard" && activeTab.startsWith(item.href + "/"));
+        const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
         return (
           <Link
             key={item.href}
             href={item.href}
-            onClick={(e) => {
-              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
-                e.preventDefault();
-                setActiveTab(item.href);
-              }
-            }}
             className="flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all active:scale-90 min-w-[56px]"
             style={{
               background: isActive ? "var(--color-surface-container-high)" : "transparent",

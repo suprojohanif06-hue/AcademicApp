@@ -8,8 +8,6 @@ interface AcademicState {
   tasks: any[];
   notes: any[];
   materials: any[];
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
   
   // Hydration
   setInitialData: (data: { courses?: any[], semesters?: any[], tasks?: any[], notes?: any[], materials?: any[], isDriveConnected?: boolean }) => void;
@@ -38,14 +36,7 @@ export const useAcademicStore = create<AcademicState>((set) => ({
   tasks: [],
   notes: [],
   materials: [],
-  activeTab: "/dashboard",
-  setActiveTab: (tab) => {
-    set({ activeTab: tab });
-    if (typeof window !== "undefined") {
-      window.history.pushState(null, "", tab);
-    }
-  },
-  
+
   setInitialData: (data) => set((state) => {
     // Only hydrate if we haven't already, OR if the new data has different lengths/updates (optional optimization)
     // To keep it simple and ensure the latest DB changes are reflected if a hard reload happens:
