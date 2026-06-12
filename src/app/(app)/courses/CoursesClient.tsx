@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createCourse, createSemester, deleteCourse, updateCourse } from "@/app/actions/academic-actions";
+import { useAcademicStore } from "@/store/useAcademicStore";
 
 type SortKey = "name" | "progress" | "tasks";
 
@@ -133,6 +134,11 @@ function CourseModal({ course, semesters, onClose }: { course?: any; semesters: 
 
 // ── Main Page ───────────────────────────────────────────────────
 export default function CoursesClient({ initialCourses, initialSemesters }: { initialCourses: any[]; initialSemesters: any[] }) {
+  const { isHydrated, courses: storeCourses, semesters: storeSemesters } = useAcademicStore();
+  
+  const currentCourses = isHydrated ? storeCourses : initialCourses;
+  const currentSemesters = isHydrated ? storeSemesters : initialSemesters;
+
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("name");
   const [selectedSemesterId, setSelectedSemesterId] = useState<string>("all");
@@ -141,7 +147,7 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [semesterModalOpen, setSemesterModalOpen] = useState(false);
 
-  const filtered = initialCourses
+  const filtered = currentCourses
     .filter((c) => selectedSemesterId === "all" || c.semesterId === selectedSemesterId)
     .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.code.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
@@ -158,7 +164,7 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
   };
 
   // Group by semester
-  const groupedCourses = initialSemesters.map(sem => ({
+  const groupedCourses = currentSemesters.map(sem => ({
     semester: sem,
     courses: filtered.filter(c => c.semesterId === sem.id)
   })).filter(g => g.courses.length > 0);
@@ -172,7 +178,7 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
       {modalOpen && (
         <CourseModal
           course={editingCourse}
-          semesters={initialSemesters}
+          semesters={currentSemesters}
           onClose={() => { setModalOpen(false); setEditingCourse(null); }}
         />
       )}

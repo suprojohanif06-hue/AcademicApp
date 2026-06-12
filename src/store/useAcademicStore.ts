@@ -3,12 +3,15 @@ import { create } from "zustand";
 interface AcademicState {
   isHydrated: boolean;
   courses: any[];
+  semesters: any[];
   tasks: any[];
   notes: any[];
   materials: any[];
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
   
   // Hydration
-  setInitialData: (data: { courses?: any[], tasks?: any[], notes?: any[], materials?: any[] }) => void;
+  setInitialData: (data: { courses?: any[], semesters?: any[], tasks?: any[], notes?: any[], materials?: any[] }) => void;
   
   // Tasks
   addTask: (task: any) => void;
@@ -29,9 +32,17 @@ interface AcademicState {
 export const useAcademicStore = create<AcademicState>((set) => ({
   isHydrated: false,
   courses: [],
+  semesters: [],
   tasks: [],
   notes: [],
   materials: [],
+  activeTab: "/dashboard",
+  setActiveTab: (tab) => {
+    set({ activeTab: tab });
+    if (typeof window !== "undefined") {
+      window.history.pushState(null, "", tab);
+    }
+  },
   
   setInitialData: (data) => set((state) => {
     // Only hydrate if we haven't already, OR if the new data has different lengths/updates (optional optimization)
@@ -39,6 +50,7 @@ export const useAcademicStore = create<AcademicState>((set) => ({
     return {
       isHydrated: true,
       courses: data.courses || state.courses,
+      semesters: data.semesters || state.semesters,
       tasks: data.tasks ? data.tasks.map(t => ({
         ...t,
         // Ensure JSON fields are parsed during hydration if not already parsed

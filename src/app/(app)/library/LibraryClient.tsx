@@ -43,7 +43,7 @@ export default function LibraryClient({
   const [uploadData, setUploadData] = useState({ title: "", url: "", courseId: "general", category: "" });
   const [isDragging, setIsDragging] = useState(false);
 
-  const { isHydrated, setInitialData, materials: storeMaterials, addMaterial } = useAcademicStore();
+  const { isHydrated, setInitialData, materials: storeMaterials, courses: storeCourses, addMaterial } = useAcademicStore();
 
   useEffect(() => {
     if (!isHydrated) {
@@ -52,6 +52,7 @@ export default function LibraryClient({
   }, [isHydrated, initialMaterials, courses, setInitialData]);
 
   const materials = isHydrated ? storeMaterials : initialMaterials;
+  const currentCourses = isHydrated ? storeCourses : courses;
 
   const handleUpload = () => {
     if (!uploadData.title) return;
@@ -68,7 +69,7 @@ export default function LibraryClient({
       fileName = uploadData.url;
     }
 
-    if (uploadData.courseId === "general" && courses.length > 0) {
+    if (uploadData.courseId === "general" && currentCourses.length > 0) {
        alert("Please select a valid course for the material.");
        return;
     } else if (uploadData.courseId === "general") {
@@ -138,9 +139,9 @@ export default function LibraryClient({
 
   const coursesMap = useMemo(() => {
     const map: Record<string, any> = {};
-    courses.forEach(c => map[c.id] = c);
+    currentCourses.forEach(c => map[c.id] = c);
     return map;
-  }, [courses]);
+  }, [currentCourses]);
 
   const filtered = useMemo(() => {
     return materials.filter((m) => {
@@ -162,7 +163,7 @@ export default function LibraryClient({
     });
   }, [materials, coursesMap, search, filter]);
 
-  const filterOptions = ["All", "Regulations", ...courses.map(c => c.code)];
+  const filterOptions = ["All", "Regulations", ...currentCourses.map(c => c.code)];
 
   return (
     <div 
@@ -363,8 +364,8 @@ export default function LibraryClient({
                   onChange={(e) => setUploadData({ ...uploadData, courseId: e.target.value })}
                   className="w-full text-sm p-2.5 border rounded-xl border-[var(--color-outline-variant)] outline-none focus:border-[var(--color-primary)] bg-white"
                 >
-                  {courses.length === 0 && <option value="general">No Courses Available</option>}
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
+                  {currentCourses.length === 0 && <option value="general">No Courses Available</option>}
+                  {currentCourses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
                 </select>
               </div>
             </div>
@@ -373,7 +374,7 @@ export default function LibraryClient({
               <button onClick={() => setShowUpload(false)} className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-800">Cancel</button>
               <button 
                 onClick={handleUpload}
-                disabled={!uploadData.title || courses.length === 0}
+                disabled={!uploadData.title || currentCourses.length === 0}
                 className="px-6 py-2 rounded-xl text-sm font-bold disabled:opacity-50 transition-opacity"
                 style={{ background: "var(--color-primary)", color: "var(--color-on-primary)" }}
               >

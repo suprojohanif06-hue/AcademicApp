@@ -1,9 +1,13 @@
 import { Sidebar, MobileTopBar, MobileBottomNav } from "@/components/Navigation";
 import { HermesButton } from "@/components/HermesButton";
 import { prisma } from "@/lib/db";
+import { getInitialWorkspaceData } from "@/app/actions/academic-actions";
+import StoreHydrator from "@/components/StoreHydrator";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   let isDriveConnected = false;
+  const initialData = await getInitialWorkspaceData();
+
   try {
     const token = await prisma.setting.findUnique({ where: { key: "google_refresh_token" } });
     if (token) isDriveConnected = true;
@@ -13,6 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-full min-h-screen bg-level">
+      <StoreHydrator initialData={initialData} />
       {/* Desktop Sidebar */}
       <Sidebar isDriveConnected={isDriveConnected} />
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAcademicStore } from "@/store/useAcademicStore";
 
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
@@ -26,7 +27,7 @@ const mobileNavItems = [
 ];
 
 export function Sidebar({ isDriveConnected = false }: { isDriveConnected?: boolean }) {
-  const pathname = usePathname();
+  const { activeTab, setActiveTab } = useAcademicStore();
   const [isCollapsed, setIsCollapsed, isHydrated] = useLocalStorage("sidebar-collapsed", false);
 
   if (!isHydrated) {
@@ -153,12 +154,18 @@ export function Sidebar({ isDriveConnected = false }: { isDriveConnected?: boole
       {/* ── Nav Items ── */}
       <div className={`flex flex-col gap-1 flex-1 overflow-y-auto overflow-x-hidden ${isCollapsed ? 'px-1 items-center w-full mt-2' : 'px-3'}`}>
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive = activeTab === item.href || (item.href !== "/dashboard" && activeTab.startsWith(item.href + "/"));
           return (
             <Link
               key={item.href}
               href={item.href}
               title={isCollapsed ? item.label : undefined}
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
+                  e.preventDefault();
+                  setActiveTab(item.href);
+                }
+              }}
               className={`nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? "active font-bold" : "hover:bg-gray-100"}`}
               style={isActive ? { background: "var(--color-primary-container)", color: "var(--color-on-primary-container)" } : { color: "var(--color-on-surface-variant)" }}
             >
@@ -179,7 +186,13 @@ export function Sidebar({ isDriveConnected = false }: { isDriveConnected?: boole
         <Link 
           href="/settings" 
           title={isCollapsed ? "Settings" : undefined}
-          className={`nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-gray-100 ${pathname.startsWith('/settings') ? 'active font-bold bg-gray-200' : ''}`}
+          onClick={(e) => {
+            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
+              e.preventDefault();
+              setActiveTab("/settings");
+            }
+          }}
+          className={`nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-gray-100 ${activeTab.startsWith('/settings') ? 'active font-bold bg-gray-200' : ''}`}
           style={{ color: "var(--color-on-surface-variant)" }}
         >
           <span className="material-symbols-outlined shrink-0" style={{ fontSize: "20px" }}>settings</span>
@@ -234,7 +247,7 @@ export function MobileTopBar({ isDriveConnected = false }: { isDriveConnected?: 
 }
 
 export function MobileBottomNav() {
-  const pathname = usePathname();
+  const { activeTab, setActiveTab } = useAcademicStore();
   return (
     <nav
       className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-1 pb-safe pt-2"
@@ -247,11 +260,17 @@ export function MobileBottomNav() {
       }}
     >
       {mobileNavItems.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+        const isActive = activeTab === item.href || (item.href !== "/dashboard" && activeTab.startsWith(item.href + "/"));
         return (
           <Link
             key={item.href}
             href={item.href}
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
+                e.preventDefault();
+                setActiveTab(item.href);
+              }
+            }}
             className="flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all active:scale-90 min-w-[56px]"
             style={{
               background: isActive ? "var(--color-surface-container-high)" : "transparent",

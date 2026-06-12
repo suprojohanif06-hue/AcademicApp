@@ -245,3 +245,14 @@ export async function deleteNote(id: string, courseId: string) {
   revalidatePath(`/courses/${courseId}`);
   revalidatePath("/library");
 }
+
+export async function getInitialWorkspaceData() {
+  const [semesters, courses, tasks, notes, materials] = await Promise.all([
+    getSemesters(),
+    getCourses(),
+    getAllTasks(),
+    getAllNotes(),
+    getAllMaterials(),
+  ]);
+  return { semesters, courses, tasks, notes, materials };
+}
