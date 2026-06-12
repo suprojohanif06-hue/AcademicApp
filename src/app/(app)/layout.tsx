@@ -1,30 +1,18 @@
 import { Sidebar, MobileTopBar, MobileBottomNav } from "@/components/Navigation";
 import { HermesButton } from "@/components/HermesButton";
-import { prisma } from "@/lib/db";
-import { getInitialWorkspaceData } from "@/app/actions/academic-actions";
 import StoreHydrator from "@/components/StoreHydrator";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  let isDriveConnected = false;
-  const initialData = await getInitialWorkspaceData();
-
-  try {
-    const token = await prisma.setting.findUnique({ where: { key: "google_refresh_token" } });
-    if (token) isDriveConnected = true;
-  } catch {
-    // DB might not be connected yet during Phase 2 dev
-  }
-
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-full min-h-screen bg-level">
-      <StoreHydrator initialData={initialData} />
-      {/* Desktop Sidebar */}
-      <Sidebar isDriveConnected={isDriveConnected} />
+    <StoreHydrator>
+      <div className="flex h-full min-h-screen bg-level">
+        {/* Desktop Sidebar */}
+        <Sidebar />
 
-      {/* Right side: top bar + scrollable content */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* Mobile Top Bar — 56px height */}
-        <MobileTopBar isDriveConnected={isDriveConnected} />
+        {/* Right side: top bar + scrollable content */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          {/* Mobile Top Bar — 56px height */}
+          <MobileTopBar />
 
         {/* Scrollable page content area */}
         <main
@@ -43,5 +31,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Floating Hermes FAB */}
       <HermesButton />
     </div>
+    </StoreHydrator>
   );
 }

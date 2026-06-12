@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 interface AcademicState {
   isHydrated: boolean;
+  isDriveConnected: boolean;
   courses: any[];
   semesters: any[];
   tasks: any[];
@@ -11,7 +12,7 @@ interface AcademicState {
   setActiveTab: (tab: string) => void;
   
   // Hydration
-  setInitialData: (data: { courses?: any[], semesters?: any[], tasks?: any[], notes?: any[], materials?: any[] }) => void;
+  setInitialData: (data: { courses?: any[], semesters?: any[], tasks?: any[], notes?: any[], materials?: any[], isDriveConnected?: boolean }) => void;
   
   // Tasks
   addTask: (task: any) => void;
@@ -31,6 +32,7 @@ interface AcademicState {
 
 export const useAcademicStore = create<AcademicState>((set) => ({
   isHydrated: false,
+  isDriveConnected: false,
   courses: [],
   semesters: [],
   tasks: [],
@@ -49,6 +51,7 @@ export const useAcademicStore = create<AcademicState>((set) => ({
     // To keep it simple and ensure the latest DB changes are reflected if a hard reload happens:
     return {
       isHydrated: true,
+      isDriveConnected: data.isDriveConnected !== undefined ? data.isDriveConnected : state.isDriveConnected,
       courses: data.courses || state.courses,
       semesters: data.semesters || state.semesters,
       tasks: data.tasks ? data.tasks.map(t => ({

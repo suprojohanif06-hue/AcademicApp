@@ -26,8 +26,8 @@ const mobileNavItems = [
   { href: "/hermes", icon: "smart_toy", label: "Hermes" },
 ];
 
-export function Sidebar({ isDriveConnected = false }: { isDriveConnected?: boolean }) {
-  const { activeTab, setActiveTab } = useAcademicStore();
+export function Sidebar() {
+  const { activeTab, setActiveTab, isDriveConnected } = useAcademicStore();
   const [isCollapsed, setIsCollapsed, isHydrated] = useLocalStorage("sidebar-collapsed", false);
 
   if (!isHydrated) {
@@ -203,7 +203,8 @@ export function Sidebar({ isDriveConnected = false }: { isDriveConnected?: boole
   );
 }
 
-export function MobileTopBar({ isDriveConnected = false }: { isDriveConnected?: boolean }) {
+export function MobileTopBar() {
+  const { isDriveConnected } = useAcademicStore();
   return (
     <header
       className="md:hidden fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-14"
