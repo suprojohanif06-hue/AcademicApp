@@ -1,0 +1,226 @@
+/* Fonts are loaded via <link> in layout.tsx for optimal performance */
+@import "tailwindcss";
+
+/* ─── Tailwind v4 Design Tokens (@theme) ───────────────────── */
+@theme {
+  /* Colors — Level Edition Palette */
+  --color-background:                #f9f9f7;
+  --color-surface:                   #f9f9f7;
+  --color-surface-bright:            #f9f9f7;
+  --color-surface-dim:               #dadad8;
+  --color-surface-container-lowest:  #ffffff;
+  --color-surface-container-low:     #f4f4f2;
+  --color-surface-container:         #eeeeec;
+  --color-surface-container-high:    #e8e8e6;
+  --color-surface-container-highest: #e2e3e1;
+  --color-surface-variant:           #e2e3e1;
+
+  --color-primary:                   #1c1c1a;
+  --color-on-primary:                #ffffff;
+  --color-primary-container:         #1c1c1a;
+  --color-on-primary-container:      #858481;
+  --color-primary-fixed:             #e5e2de;
+  --color-primary-fixed-dim:         #c9c6c3;
+  --color-inverse-primary:           #c9c6c3;
+
+  --color-secondary:                 #8c4e36;
+  --color-on-secondary:              #ffffff;
+  --color-secondary-container:       #ffad90;
+  --color-on-secondary-container:    #793f28;
+  --color-secondary-fixed:           #ffdbcf;
+  --color-secondary-fixed-dim:       #ffb59b;
+
+  --color-tertiary:                  #755b00;
+  --color-on-tertiary:               #ffffff;
+  --color-tertiary-container:        #c9a84b;
+  --color-on-tertiary-container:     #503d00;
+  --color-tertiary-fixed:            #ffe08f;
+  --color-tertiary-fixed-dim:        #e6c363;
+
+  --color-on-surface:                #1a1c1b;
+  --color-on-surface-variant:        #474741;
+  --color-inverse-surface:           #2f3130;
+  --color-inverse-on-surface:        #f1f1ef;
+
+  --color-outline:                   #777771;
+  --color-outline-variant:           #c8c7bf;
+  --color-surface-tint:              #5f5e5c;
+
+  --color-error:                     #ba1a1a;
+  --color-on-error:                  #ffffff;
+  --color-error-container:           #ffdad6;
+  --color-on-error-container:        #93000a;
+
+  /* Pastel accent palettes */
+  --color-pastel-peach:              #ffe5d9;
+  --color-pastel-mint:               #d8f3dc;
+  --color-pastel-lavender:           #e2d4f0;
+  --color-pastel-yellow:             #fef3c7;
+  --color-pastel-blue:               #dbeafe;
+
+  /* Typography */
+  --font-serif:   "Playfair Display", Georgia, serif;
+  --font-sans:    "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", "Courier New", monospace;
+
+  /* Border radius */
+  --radius-sm:    0.5rem;
+  --radius:       1rem;
+  --radius-lg:    1.5rem;
+  --radius-xl:    2rem;
+  --radius-full:  9999px;
+
+  /* Spacing tokens */
+  --spacing-gutter:    1rem;
+  --spacing-section:   2rem;
+  --spacing-card:      1.25rem;
+}
+
+/* ─── Base Styles ───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ─── Material Symbols ──────────────────────────────────────── */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  user-select: none;
+}
+.icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+/* ─── Utility Classes ───────────────────────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.soft-tile {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+}
+
+.xp-badge {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Page background subtle noise ─────────────────────────── */
+.bg-level {
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(26,26,24,0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(140,78,54,0.04) 0px, transparent 50%);
+}
+
+/* ─── Animations ────────────────────────────────────────────── */
+@keyframes float {
+  0%   { transform: translateY(0px) rotate(0deg); }
+  50%  { transform: translateY(-15px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+@keyframes float-delayed {
+  0%   { transform: translateY(0px) rotate(0deg); }
+  50%  { transform: translateY(-12px) rotate(-1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.2; }
+  50%       { opacity: 0.4; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-float          { animation: float 8s ease-in-out infinite; }
+.animate-float-delayed  { animation: float-delayed 10s ease-in-out infinite 1.5s; }
+.animate-pulse-glow     { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-slide-up       { animation: slide-up 0.6s ease-out both; }
+.animate-fade-in        { animation: fade-in 0.5s ease-out both; }
+
+/* ─── Staggered animation delays ───────────────────────────── */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ─── Scrollbar Styling ─────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-outline); }
+
+/* ─── Sidebar Styles ────────────────────────────────────────── */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+}
+.nav-link:hover      { background: rgba(255,255,255,0.5); color: var(--color-primary); }
+.nav-link.active     { background: rgba(28,28,26,0.08); color: var(--color-primary); font-weight: 700; }
+
+/* ─── Card hover lift ───────────────────────────────────────── */
+.card-hover {
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card-hover:hover {
+  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+}
+
+/* Editor List Styles */
+.ProseMirror ul[data-list-style-type="disc"] { list-style-type: disc; }
+.ProseMirror ul[data-list-style-type="circle"] { list-style-type: circle; }
+.ProseMirror ul[data-list-style-type="square"] { list-style-type: square; }
+
+.ProseMirror ol[data-list-style-type="decimal"] { list-style-type: decimal; }
+.ProseMirror ol[data-list-style-type="lower-alpha"] { list-style-type: lower-alpha; }
+.ProseMirror ol[data-list-style-type="upper-alpha"] { list-style-type: upper-alpha; }
+.ProseMirror ol[data-list-style-type="lower-roman"] { list-style-type: lower-roman; }
+.ProseMirror ol[data-list-style-type="upper-roman"] { list-style-type: upper-roman; }

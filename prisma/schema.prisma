@@ -1,0 +1,155 @@
+// This is your Prisma schema file for Academic OS v2.1
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ─── 1. Course (Mata Kuliah) ─────────────────────────────────────
+model Course {
+  id             String     @id @default(cuid())
+  name           String     @unique                  // "K3 — Keselamatan & Kesehatan Kerja"
+  code           String                              // "K3-101"
+  lecturer       String                              // "Dr. Pratiwi"
+  room           String?                             // "Lab K3 • R.101"
+  credits        Int        @default(2)              // SKS
+  color          String     @default("#ffe5d9")      // pastel card color (hex)
+  icon           String     @default("school")
+  progress       Int        @default(0)
+  level          Int        @default(1)
+  xp             Int        @default(0)
+  gdriveFolderId String?                             // Root folder ID di Google Drive
+  
+  semesterId     String?
+  semester       Semester?  @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  notes          Note[]
+  materials      Material[]
+  tasks          Task[]
+  schedules      Schedule[]
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@map("courses")
+}
+
+// ─── 1.5 Semester ────────────────────────────────────────────────
+model Semester {
+  id        String   @id @default(cuid())
+  name      String
+  active    Boolean  @default(false)
+  courses   Course[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("semesters")
+}
+
+// ─── 2. Note Metadata Registry ────────────────────────────────────
+// Konten .md DISIMPAN DI GOOGLE DRIVE, bukan di sini.
+// DB hanya menyimpan metadata & relasi sitasi.
+model Note {
+  id           String     @id @default(cuid())
+  title        String                              // "Ringkasan UU 1/1970 Pasal 3"
+  gdriveFileId String     @unique                  // ID file .md di Google Drive
+  courseId     String
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  citations    Citation[]                          // Relasi ke sitasi dari catatan ini
+  wordCount    Int?                                // Di-update saat sync
+  isDraft      Boolean    @default(true)
+  content      String?                             // Local draft content
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("notes")
+}
+
+// ─── 3. Material (PDF / Peraturan / Materi Kuliah) ────────────────
+// File fisik ada di Google Drive. DB hanya menyimpan alamatnya.
+model Material {
+  id           String     @id @default(cuid())
+  name         String                              // "UU No. 1 Tahun 1970.pdf"
+  type         String     @default("PDF")          // "PDF", "PPT", "DOCX"
+  gdriveFileId String     @unique                  // ID file di Google Drive
+  courseId     String
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  citations    Citation[]                          // Semua sitasi yang merujuk material ini
+  pageCount    Int?                                // Total halaman (di-index saat upload)
+  totalPages   Int        @default(1)
+  source       String     @default("Local")
+  url          String?
+
+  createdAt    DateTime   @default(now())
+
+  @@map("materials")
+}
+
+// ─── 4. Smart Citation (Deep Link PDF ↔ Catatan) ─────────────────
+// Jantung dari fitur PDF Citation System.
+model Citation {
+  id            String   @id @default(cuid())
+  noteId        String
+  materialId    String
+  pageNumber    Int                               // Halaman yang disitasi
+  anchorText    String?                           // Teks yang di-highlight di PDF
+  citationKey   String                            // Format: "[[UU-1-1970#page=5&text=pasal_3]]"
+  note          Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  material      Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+
+  @@map("citations")
+}
+
+// ─── 5. Task / Quest (Boss Battle) ───────────────────────────────
+model Task {
+  id          String    @id @default(cuid())
+  title       String                              // "Makalah APD K3 Konstruksi"
+  description String?
+  dueDate     DateTime
+  isCompleted Boolean   @default(false)
+  xpReward    Int       @default(100)             // XP yang didapat saat selesai
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  gcalEventId String?                             // ID Event di Google Calendar (setelah sync)
+  
+  type        String    @default("assignment")
+  status      String    @default("todo")
+  priority    String    @default("medium")
+  checklistData String?
+  attachmentsData String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("tasks")
+}
+
+// ─── 6. Schedule (Jadwal Kelas Rutin) ────────────────────────────
+model Schedule {
+  id        String  @id @default(cuid())
+  dayOfWeek Int                                   // 1=Senin, 2=Selasa, ..., 7=Minggu
+  startTime String                                // "08:00"
+  endTime   String                                // "09:40"
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("schedules")
+}
+
+// ─── 7. Settings (OAuth Tokens & App Config) ─────────────────────
+// Menyimpan refresh token Google OAuth secara aman (harus dienkripsi di app-level).
+model Setting {
+  key       String   @id                          // "google_refresh_token", "scholar_level", dll
+  value     String                                // Nilai (token HARUS dienkripsi sebelum disimpan)
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
