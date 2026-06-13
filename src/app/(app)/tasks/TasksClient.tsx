@@ -843,7 +843,7 @@ export default function TasksClient({
                             <TaskCard
                               key={task.id}
                               task={task}
-                              course={initialCourses.find((course) => course.id === task.courseId)}
+                              course={courses.find((course) => course.id === task.courseId)}
                               onMove={handleUpdateTaskStatus}
                               onDoneToggle={toggleDone}
                               onClick={setSelectedTaskId}
@@ -861,7 +861,7 @@ export default function TasksClient({
               </div>
             </div>
           ) : (
-            <TimelineRoadmapView tasks={visibleTasks} courses={initialCourses} onClick={setSelectedTaskId} />
+            <TimelineRoadmapView tasks={visibleTasks} courses={courses} onClick={setSelectedTaskId} />
           )}
         </section>
 
@@ -877,9 +877,9 @@ export default function TasksClient({
       {selectedTask && (
         <TaskDetailPane
           task={selectedTask}
-          courses={initialCourses}
-          materials={initialMaterials}
-          notes={initialNotes}
+          courses={courses}
+          materials={materials}
+          notes={notes}
           onClose={() => setSelectedTaskId(null)}
           onUpdate={handleUpdateTask}
         />

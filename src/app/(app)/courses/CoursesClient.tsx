@@ -39,10 +39,10 @@ function SemesterModal({ onClose }: { onClose: () => void }) {
 }
 
 // ── Course Modal ────────────────────────────────────────────────
-function CourseModal({ course, semesters, onClose }: { course?: any; semesters: any[]; onClose: () => void }) {
+function CourseModal({ course, semesters, defaultSemesterId, onClose }: { course?: any; semesters: any[]; defaultSemesterId?: string; onClose: () => void }) {
   const [formData, setFormData] = useState(() =>
     course || {
-      semesterId: semesters[0]?.id || "",
+      semesterId: defaultSemesterId || semesters[0]?.id || "",
       code: "",
       name: "",
       lecturer: "",
@@ -148,6 +148,7 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
   
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
+  const [defaultSemesterId, setDefaultSemesterId] = useState<string>("");
   const [semesterModalOpen, setSemesterModalOpen] = useState(false);
 
   const filtered = currentCourses
@@ -168,10 +169,13 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
   };
 
   // Group by semester
-  const groupedCourses = currentSemesters.map(sem => ({
-    semester: sem,
-    courses: filtered.filter(c => c.semesterId === sem.id)
-  })).filter(g => g.courses.length > 0);
+  const groupedCourses = currentSemesters
+    .filter(sem => selectedSemesterId === "all" || sem.id === selectedSemesterId)
+    .map(sem => ({
+      semester: sem,
+      courses: filtered.filter(c => c.semesterId === sem.id)
+    }))
+    .filter(g => g.courses.length > 0 || (search.trim() === "" && (selectedSemesterId === "all" || g.semester.id === selectedSemesterId)));
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-8 animate-fade-in">
@@ -183,7 +187,8 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
         <CourseModal
           course={editingCourse}
           semesters={currentSemesters}
-          onClose={() => { setModalOpen(false); setEditingCourse(null); }}
+          defaultSemesterId={defaultSemesterId}
+          onClose={() => { setModalOpen(false); setEditingCourse(null); setDefaultSemesterId(""); }}
         />
       )}
 
@@ -207,7 +212,7 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
             Add Semester
           </button>
           <button
-            onClick={() => { setEditingCourse(null); setModalOpen(true); }}
+            onClick={() => { setEditingCourse(null); setDefaultSemesterId(""); setModalOpen(true); }}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold self-start sm:self-auto transition-all hover:opacity-90 active:scale-95"
             style={{ background: "var(--color-primary)", color: "var(--color-on-primary)" }}
           >
@@ -226,7 +231,7 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
           >
             All Semesters
           </button>
-          {initialSemesters.map(sem => (
+          {currentSemesters.map(sem => (
             <button
               key={sem.id}
               onClick={() => setSelectedSemesterId(sem.id)}
@@ -264,10 +269,10 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 animate-slide-up delay-100">
         {[
-          { label: "Mata Kuliah", value: initialCourses.length, icon: "school" },
-          { label: "Total SKS", value: initialCourses.reduce((a, c) => a + c.credits, 0), icon: "star" },
-          { label: "Total Catatan", value: initialCourses.reduce((a, c) => a + c.notesCount, 0), icon: "description" },
-          { label: "Pending Tasks", value: initialCourses.reduce((a, c) => a + c.tasksCount, 0), icon: "task_alt" },
+          { label: "Mata Kuliah", value: currentCourses.length, icon: "school" },
+          { label: "Total SKS", value: currentCourses.reduce((a, c) => a + c.credits, 0), icon: "star" },
+          { label: "Total Catatan", value: currentCourses.reduce((a, c) => a + c.notesCount, 0), icon: "description" },
+          { label: "Pending Tasks", value: currentCourses.reduce((a, c) => a + c.tasksCount, 0), icon: "task_alt" },
         ].map((s) => (
           <div key={s.label} className="p-4 rounded-2xl flex items-center gap-3 card-hover" style={{ background: "var(--color-surface-container-low)", border: "1px solid var(--color-outline-variant)" }}>
             <span className="material-symbols-outlined icon-filled" style={{ fontSize: "22px", color: "var(--color-secondary)" }}>{s.icon}</span>
@@ -318,7 +323,8 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
               {semester.name}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {courses.map((course) => (
+              {courses.length > 0 ? (
+                courses.map((course) => (
                 <Link
                   key={course.id}
                   href={`/courses/${course.id}`}
@@ -396,7 +402,13 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
               </div>
             </div>
           </Link>
-        ))}
+        ))
+      ) : (
+        <div className="col-span-2 rounded-2xl border border-dashed p-6 text-center" style={{ borderColor: "var(--color-outline-variant)", background: "var(--color-surface-container-low)" }}>
+          <p className="text-xs text-gray-500 mb-2">Belum ada mata kuliah di semester ini</p>
+          <button onClick={() => { setEditingCourse(null); setDefaultSemesterId(semester.id); setModalOpen(true); }} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-gray-200 hover:bg-gray-50">+ Tambah Kelas</button>
+        </div>
+      )}
           </div>
         </div>
         ))}

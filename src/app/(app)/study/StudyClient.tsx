@@ -632,7 +632,7 @@ function StudyWorkspaceContent({
           {/* FILE MENU */}
           <div className="relative group">
             <button className="font-bold text-black px-2 py-1.5 rounded hover:bg-gray-100">File</button>
-            <div className="absolute left-0 top-full hidden w-48 flex-col rounded-xl border bg-white p-1 shadow-xl group-hover:flex" style={{ borderColor: "var(--color-outline-variant)" }}>
+            <div className="absolute left-0 top-full hidden w-48 flex-col rounded-xl border bg-white p-1 shadow-xl group-hover:flex z-50" style={{ borderColor: "var(--color-outline-variant)" }}>
               <button onClick={() => { setEditorContent("# New Study Note\n\nStart typing your analysis here..."); setCurrentNoteId(null); setCourseContext(null); setTaskContext(null); }} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm hover:bg-gray-100">
                 <span className="material-symbols-outlined text-[16px] text-gray-500">note_add</span> New Note
               </button>
@@ -649,7 +649,7 @@ function StudyWorkspaceContent({
           {/* INSERT MENU */}
           <div className="relative group">
             <button className="text-gray-600 hover:text-black px-2 py-1.5 rounded hover:bg-gray-100">Insert</button>
-            <div className="absolute left-0 top-full hidden w-48 flex-col rounded-xl border bg-white p-1 shadow-xl group-hover:flex" style={{ borderColor: "var(--color-outline-variant)" }}>
+            <div className="absolute left-0 top-full hidden w-48 flex-col rounded-xl border bg-white p-1 shadow-xl group-hover:flex z-50" style={{ borderColor: "var(--color-outline-variant)" }}>
               <button onClick={() => editorRef.current?.editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm hover:bg-gray-100">
                 <span className="material-symbols-outlined text-[16px] text-gray-500">table_chart</span> Table
               </button>
@@ -673,7 +673,7 @@ function StudyWorkspaceContent({
           {/* FORMAT MENU */}
           <div className="relative group">
             <button className="text-gray-600 hover:text-black px-2 py-1.5 rounded hover:bg-gray-100">Format</button>
-            <div className="absolute left-0 top-full hidden w-48 flex-col rounded-xl border bg-white p-1 shadow-xl group-hover:flex" style={{ borderColor: "var(--color-outline-variant)" }}>
+            <div className="absolute left-0 top-full hidden w-48 flex-col rounded-xl border bg-white p-1 shadow-xl group-hover:flex z-50" style={{ borderColor: "var(--color-outline-variant)" }}>
               <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Text</div>
               <button onClick={() => editorRef.current?.editor?.chain().focus().toggleBold().run()} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm hover:bg-gray-100">
                 <span className="material-symbols-outlined text-[16px] text-gray-500">format_bold</span> Bold
@@ -695,7 +695,7 @@ function StudyWorkspaceContent({
           {/* TOOLS MENU */}
           <div className="relative group">
             <button className="text-gray-600 hover:text-black px-2 py-1.5 rounded hover:bg-gray-100">Tools</button>
-            <div className="absolute left-0 top-full hidden w-48 flex-col rounded-xl border bg-white p-1 shadow-xl group-hover:flex" style={{ borderColor: "var(--color-outline-variant)" }}>
+            <div className="absolute left-0 top-full hidden w-48 flex-col rounded-xl border bg-white p-1 shadow-xl group-hover:flex z-50" style={{ borderColor: "var(--color-outline-variant)" }}>
               <button onClick={() => {
                 const words = editorRef.current?.editor?.storage.characterCount.words();
                 const chars = editorRef.current?.editor?.storage.characterCount.characters();
