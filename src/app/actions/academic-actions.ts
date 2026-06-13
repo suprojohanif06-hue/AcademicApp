@@ -22,6 +22,18 @@ export async function createSemester(data: { name: string; active?: boolean }) {
   return semester;
 }
 
+export async function deleteSemester(id: string) {
+  await prisma.course.deleteMany({
+    where: { semesterId: id },
+  });
+  const semester = await prisma.semester.delete({
+    where: { id },
+  });
+  revalidatePath("/courses");
+  revalidatePath("/dashboard");
+  return semester;
+}
+
 // ─── COURSES ────────────────────────────────────────────────────
 export async function getCourses() {
   const courses = await prisma.course.findMany({

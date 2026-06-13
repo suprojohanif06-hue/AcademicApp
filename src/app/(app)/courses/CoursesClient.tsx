@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createCourse, createSemester, deleteCourse, updateCourse } from "@/app/actions/academic-actions";
+import { createCourse, createSemester, deleteCourse, updateCourse, deleteSemester } from "@/app/actions/academic-actions";
 import { useAcademicStore } from "@/store/useAcademicStore";
 
 type SortKey = "name" | "progress" | "tasks";
@@ -168,6 +168,13 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
     }
   };
 
+  const handleDeleteSemester = async (id: string, name: string) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus semester "${name}"? Tindakan ini juga akan menghapus seluruh mata kuliah, tugas, catatan, dan materi di dalam semester ini.`)) {
+      await deleteSemester(id);
+      useAcademicStore.getState().deleteSemester(id);
+    }
+  };
+
   // Group by semester
   const groupedCourses = currentSemesters
     .filter(sem => selectedSemesterId === "all" || sem.id === selectedSemesterId)
@@ -317,11 +324,21 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
       {/* Course Cards Grid by Semester */}
       <div className="flex flex-col gap-10 animate-slide-up delay-300">
         {groupedCourses.map(({ semester, courses }) => (
-          <div key={semester.id}>
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ fontFamily: "var(--font-serif)", color: "var(--color-primary)" }}>
-              <span className="material-symbols-outlined icon-filled" style={{ fontSize: "20px" }}>school</span>
-              {semester.name}
-            </h3>
+          <div key={semester.id} className="group/semSection">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold flex items-center gap-2" style={{ fontFamily: "var(--font-serif)", color: "var(--color-primary)" }}>
+                <span className="material-symbols-outlined icon-filled" style={{ fontSize: "20px" }}>school</span>
+                {semester.name}
+              </h3>
+              <button
+                onClick={() => handleDeleteSemester(semester.id, semester.name)}
+                className="opacity-60 md:opacity-0 group-hover/semSection:opacity-100 transition-opacity flex items-center gap-1 text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100/30 px-2.5 py-1.5 rounded-xl border border-red-100 hover:border-red-200"
+                title="Hapus Semester beserta seluruh kelas di dalamnya"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
+                Hapus Semester
+              </button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {courses.length > 0 ? (
                 courses.map((course) => (

@@ -14,6 +14,7 @@ interface AcademicState {
 
   // Semesters
   addSemester: (semester: any) => void;
+  deleteSemester: (id: string) => void;
 
   // Courses
   addCourse: (course: any) => void;
@@ -66,6 +67,16 @@ export const useAcademicStore = create<AcademicState>((set) => ({
 
   // Semesters
   addSemester: (semester) => set((state) => ({ semesters: [...state.semesters, semester] })),
+  deleteSemester: (id) => set((state) => {
+    const courseIdsToDelete = state.courses.filter(c => c.semesterId === id).map(c => c.id);
+    return {
+      semesters: state.semesters.filter(s => s.id !== id),
+      courses: state.courses.filter(c => c.semesterId !== id),
+      tasks: state.tasks.filter(t => !courseIdsToDelete.includes(t.courseId)),
+      notes: state.notes.filter(n => !courseIdsToDelete.includes(n.courseId)),
+      materials: state.materials.filter(m => !courseIdsToDelete.includes(m.courseId)),
+    };
+  }),
 
   // Courses
   addCourse: (course) => set((state) => ({ courses: [...state.courses, { ...course, tasksCount: 0, notesCount: 0, materialsCount: 0 }] })),
