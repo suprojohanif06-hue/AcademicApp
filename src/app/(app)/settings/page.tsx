@@ -1,6 +1,10 @@
 "use client";
 
+import { useAcademicStore } from "@/store/useAcademicStore";
+
 export default function SettingsPage() {
+  const { isHydrated } = useAcademicStore();
+
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-8 animate-fade-in">
       <div className="mb-8 animate-slide-up">
@@ -11,16 +15,28 @@ export default function SettingsPage() {
         <p className="text-sm mt-1" style={{ color: "var(--color-on-surface-variant)" }}>Konfigurasi aplikasi Academic OS Anda.</p>
       </div>
 
-      <div className="p-6 rounded-2xl mb-6 flex flex-col gap-3" style={{ background: "var(--color-error-container)", border: "1px solid var(--color-error)" }}>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined icon-filled" style={{ color: "var(--color-error)" }}>warning</span>
-          <h3 className="font-bold text-base" style={{ color: "var(--color-error)" }}>Backend Disconnected (Prototype Mode)</h3>
+      {!isHydrated ? (
+        <div className="p-6 rounded-2xl mb-6 flex flex-col gap-3" style={{ background: "var(--color-error-container)", border: "1px solid var(--color-error)" }}>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined icon-filled" style={{ color: "var(--color-error)" }}>warning</span>
+            <h3 className="font-bold text-base" style={{ color: "var(--color-error)" }}>Backend Disconnected (Prototype Mode)</h3>
+          </div>
+          <p className="text-sm text-red-900 leading-relaxed">
+            Aplikasi sedang berjalan menggunakan <strong>LocalStorage (Mock DB)</strong> karena `.env.local` belum lengkap.
+            Fungsi sinkronisasi Google Drive dan database Supabase dijeda. Anda masih bisa mencoba navigasi dan interaksi antarmuka (Add/Edit Tasks, Course, dll) secara lokal.
+          </p>
         </div>
-        <p className="text-sm text-red-900 leading-relaxed">
-          Aplikasi sedang berjalan menggunakan <strong>LocalStorage (Mock DB)</strong> karena `.env.local` belum lengkap.
-          Fungsi sinkronisasi Google Drive dan database Supabase dijeda. Anda masih bisa mencoba navigasi dan interaksi antarmuka (Add/Edit Tasks, Course, dll) secara lokal.
-        </p>
-      </div>
+      ) : (
+        <div className="p-6 rounded-2xl mb-6 flex flex-col gap-3" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined icon-filled" style={{ color: "#16a34a" }}>check_circle</span>
+            <h3 className="font-bold text-base" style={{ color: "#15803d" }}>Backend Connected (Supabase Live)</h3>
+          </div>
+          <p className="text-xs md:text-sm text-green-800 leading-relaxed">
+            Academic OS telah tersambung secara live dengan database <strong>Supabase</strong>. Semua data mata kuliah, semester, tugas, catatan, dan dokumen Anda disinkronkan secara realtime.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <section className="p-6 rounded-2xl" style={{ background: "white", border: "1px solid var(--color-outline-variant)" }}>
