@@ -11,6 +11,14 @@ interface AcademicState {
   
   // Hydration
   setInitialData: (data: { courses?: any[], semesters?: any[], tasks?: any[], notes?: any[], materials?: any[], isDriveConnected?: boolean }) => void;
+
+  // Semesters
+  addSemester: (semester: any) => void;
+
+  // Courses
+  addCourse: (course: any) => void;
+  updateCourse: (id: string, updates: any) => void;
+  deleteCourse: (id: string) => void;
   
   // Tasks
   addTask: (task: any) => void;
@@ -55,6 +63,18 @@ export const useAcademicStore = create<AcademicState>((set) => ({
       materials: data.materials || state.materials,
     };
   }),
+
+  // Semesters
+  addSemester: (semester) => set((state) => ({ semesters: [...state.semesters, semester] })),
+
+  // Courses
+  addCourse: (course) => set((state) => ({ courses: [...state.courses, { ...course, tasksCount: 0, notesCount: 0, materialsCount: 0 }] })),
+  updateCourse: (id, updates) => set((state) => ({
+    courses: state.courses.map(c => c.id === id ? { ...c, ...updates } : c)
+  })),
+  deleteCourse: (id) => set((state) => ({
+    courses: state.courses.filter(c => c.id !== id)
+  })),
 
   // Task Actions
   addTask: (task) => set((state) => ({ tasks: [task, ...state.tasks] })),

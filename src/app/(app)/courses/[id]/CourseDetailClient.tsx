@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createMaterial, createNote, createTask, deleteMaterial, deleteNote, deleteTask } from "@/app/actions/academic-actions";
+import { useAcademicStore } from "@/store/useAcademicStore";
 
 type ModalKind = "material" | "note" | "task" | null;
 
@@ -52,7 +53,7 @@ function MaterialModal({ courseId, onClose }: { courseId: string; onClose: () =>
           if (!title.trim()) return;
           setLoading(true);
           const safeFile = fileName.trim() || `${title.trim().replace(/\s+/g, "-")}.pdf`;
-          await createMaterial({
+          const created = await createMaterial({
             courseId,
             title: title.trim(),
             type,
@@ -61,6 +62,7 @@ function MaterialModal({ courseId, onClose }: { courseId: string; onClose: () =>
             totalPages: Math.max(1, totalPages || 1),
             source
           });
+          useAcademicStore.getState().addMaterial(created);
           setLoading(false);
           onClose();
         }}>{loading ? "Saving..." : "Save Material"}</button>
@@ -90,11 +92,12 @@ function NoteModal({ courseId, materials, onClose }: { courseId: string; materia
           if (!title.trim()) return;
           setLoading(true);
           const body = template === "blank" ? `# ${title}\n\n` : template === "summary" ? `# ${title}\n\n## Poin Penting\n\n## Ringkasan\n\n## Pertanyaan\n` : template === "report" ? `# ${title}\n\n## Latar Belakang\n\n## Analisis\n\n## Kesimpulan\n` : `# ${title}\n\n## Dasar Hukum\n\n## Pasal Penting\n\n## Implikasi\n`;
-          await createNote({
+          const created = await createNote({
             courseId,
             title: title.trim(),
             content: body
           });
+          useAcademicStore.getState().addNote(created);
           setLoading(false);
           onClose();
         }}>{loading ? "Creating..." : "Create Note"}</button>
@@ -142,7 +145,7 @@ function TaskModal({ course, materials, notes, onClose }: { course: any; materia
         <button className={primaryBtn} disabled={loading} style={{ background: "var(--color-primary)", color: "var(--color-on-primary)" }} onClick={async () => {
           if (!title.trim()) return;
           setLoading(true);
-          await createTask({
+          const created = await createTask({
             courseId: course.id,
             title: title.trim(),
             type,
@@ -150,6 +153,7 @@ function TaskModal({ course, materials, notes, onClose }: { course: any; materia
             priority,
             dueDate,
           });
+          useAcademicStore.getState().addTask(created);
           setLoading(false);
           onClose();
         }}>{loading ? "Creating..." : "Create Task"}</button>
@@ -161,14 +165,20 @@ function TaskModal({ course, materials, notes, onClose }: { course: any; materia
 export default function CourseDetailClient({ course, materials, notes, tasks }: { course: any; materials: any[]; notes: any[]; tasks: any[] }) {
   const [modal, setModal] = useState<ModalKind>(null);
 
+  const { isHydrated, tasks: storeTasks, notes: storeNotes, materials: storeMaterials } = useAcademicStore();
+
+  const currentTasks = isHydrated ? storeTasks.filter((t) => t.courseId === course.id) : tasks;
+  const currentNotes = isHydrated ? storeNotes.filter((n) => n.courseId === course.id) : notes;
+  const currentMaterials = isHydrated ? storeMaterials.filter((m) => m.courseId === course.id) : materials;
+
   const semester = course.semester;
   const openStudyBase = `/study?courseId=${course.id}`;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 pb-20 md:px-8 md:py-8 animate-fade-in">
       {modal === "material" && <MaterialModal courseId={course.id} onClose={() => setModal(null)} />}
-      {modal === "note" && <NoteModal courseId={course.id} materials={materials} onClose={() => setModal(null)} />}
-      {modal === "task" && <TaskModal course={course} materials={materials} notes={notes} onClose={() => setModal(null)} />}
+      {modal === "note" && <NoteModal courseId={course.id} materials={currentMaterials} onClose={() => setModal(null)} />}
+      {modal === "task" && <TaskModal course={course} materials={currentMaterials} notes={currentNotes} onClose={() => setModal(null)} />}
 
       <Link href="/courses" className="mb-6 flex items-center gap-1 text-sm" style={{ color: "var(--color-primary)" }}><span className="material-symbols-outlined text-[18px]">arrow_back</span>Back to Courses</Link>
 
@@ -191,16 +201,16 @@ export default function CourseDetailClient({ course, materials, notes, tasks }: 
 
       <div className="mt-8 flex flex-col gap-10">
         <section>
-          <SectionHeader icon="picture_as_pdf" title="Materials" count={materials.length} action="+ Add Material" onAction={() => setModal("material")} />
-          {materials.length ? <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{materials.map((m) => <ItemCard key={m.id} icon={m.type === "PDF" ? "picture_as_pdf" : "description"} title={m.name} meta={`${m.type} • ${m.source} • ${m.totalPages} pages`} href={`${openStudyBase}&materialId=${m.id}`} onDelete={() => deleteMaterial(m.id, course.id)} />)}</div> : <EmptyState text="Belum ada materi." cta="Tambah materi pertama" onClick={() => setModal("material")} />}
+          <SectionHeader icon="picture_as_pdf" title="Materials" count={currentMaterials.length} action="+ Add Material" onAction={() => setModal("material")} />
+          {currentMaterials.length ? <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{currentMaterials.map((m) => <ItemCard key={m.id} icon={m.type === "PDF" ? "picture_as_pdf" : "description"} title={m.name} meta={`${m.type} • ${m.source} • ${m.totalPages} pages`} href={`${openStudyBase}&materialId=${m.id}`} onDelete={async () => { await deleteMaterial(m.id, course.id); useAcademicStore.getState().deleteMaterial(m.id); }} />)}</div> : <EmptyState text="Belum ada materi." cta="Tambah materi pertama" onClick={() => setModal("material")} />}
         </section>
         <section>
-          <SectionHeader icon="description" title="Notes" count={notes.length} action="+ New Note" onAction={() => setModal("note")} />
-          {notes.length ? <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{notes.map((n) => <ItemCard key={n.id} icon="description" title={n.title} meta={`Updated ${new Date(n.updatedAt).toLocaleDateString()}`} href={`${openStudyBase}&docId=${n.id}`} onDelete={() => deleteNote(n.id, course.id)} />)}</div> : <EmptyState text="Belum ada catatan." cta="Buat catatan pertama" onClick={() => setModal("note")} />}
+          <SectionHeader icon="description" title="Notes" count={currentNotes.length} action="+ New Note" onAction={() => setModal("note")} />
+          {currentNotes.length ? <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">{currentNotes.map((n) => <ItemCard key={n.id} icon="description" title={n.title} meta={`Updated ${new Date(n.updatedAt).toLocaleDateString()}`} href={`${openStudyBase}&docId=${n.id}`} onDelete={async () => { await deleteNote(n.id, course.id); useAcademicStore.getState().deleteNote(n.id); }} />)}</div> : <EmptyState text="Belum ada catatan." cta="Buat catatan pertama" onClick={() => setModal("note")} />}
         </section>
         <section>
-          <SectionHeader icon="task_alt" title="Tasks" count={tasks.length} action="+ New Task" onAction={() => setModal("task")} />
-          {tasks.length ? <div className="flex flex-col gap-3">{tasks.map((t) => <ItemCard key={t.id} icon={t.status === "done" ? "check_circle" : "radio_button_unchecked"} title={t.title} meta={`${t.status.toUpperCase()} • ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "No due"} • ${t.priority}`} href={`${openStudyBase}&taskId=${t.id}`} onDelete={() => deleteTask(t.id, course.id)} wide />)}</div> : <EmptyState text="Tidak ada tugas aktif." cta="Tambah tugas pertama" onClick={() => setModal("task")} />}
+          <SectionHeader icon="task_alt" title="Tasks" count={currentTasks.length} action="+ New Task" onAction={() => setModal("task")} />
+          {currentTasks.length ? <div className="flex flex-col gap-3">{currentTasks.map((t) => <ItemCard key={t.id} icon={t.status === "done" ? "check_circle" : "radio_button_unchecked"} title={t.title} meta={`${t.status.toUpperCase()} • ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "No due"} • ${t.priority}`} href={`${openStudyBase}&taskId=${t.id}`} onDelete={async () => { await deleteTask(t.id, course.id); useAcademicStore.getState().deleteTask(t.id); }} wide />)}</div> : <EmptyState text="Tidak ada tugas aktif." cta="Tambah tugas pertama" onClick={() => setModal("task")} />}
         </section>
       </div>
     </div>

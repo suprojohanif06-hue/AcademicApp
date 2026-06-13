@@ -15,7 +15,8 @@ function SemesterModal({ onClose }: { onClose: () => void }) {
   const handleSave = async () => {
     if (!name.trim()) return;
     setLoading(true);
-    await createSemester({ name: name.trim(), active: true });
+    const created = await createSemester({ name: name.trim(), active: true });
+    useAcademicStore.getState().addSemester(created);
     setLoading(false);
     onClose();
   };
@@ -58,9 +59,11 @@ function CourseModal({ course, semesters, onClose }: { course?: any; semesters: 
     if (!formData.name || !formData.code || !formData.semesterId) return;
     setLoading(true);
     if (course) {
-      await updateCourse(course.id, formData);
+      const updated = await updateCourse(course.id, formData);
+      useAcademicStore.getState().updateCourse(course.id, updated);
     } else {
-      await createCourse(formData);
+      const created = await createCourse(formData);
+      useAcademicStore.getState().addCourse(created);
     }
     setLoading(false);
     onClose();
@@ -160,6 +163,7 @@ export default function CoursesClient({ initialCourses, initialSemesters }: { in
     e.preventDefault(); // prevent Link navigation
     if (confirm("Delete this course and all its data?")) {
       await deleteCourse(id);
+      useAcademicStore.getState().deleteCourse(id);
     }
   };
 
