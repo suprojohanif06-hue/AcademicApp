@@ -3,6 +3,9 @@ import { google } from "googleapis";
 import { prisma } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
+  const { getCurrentUserId } = await import("@/lib/auth");
+  const userId = await getCurrentUserId();
+  
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
 
@@ -23,9 +26,9 @@ export async function GET(request: NextRequest) {
     // We are saving it to the database so Hermes and the background sync can use it.
     if (tokens.refresh_token) {
       await prisma.setting.upsert({
-        where: { key: "google_refresh_token" },
+        where: { userId_key: { userId, key: "google_refresh_token" } },
         update: { value: tokens.refresh_token },
-        create: { key: "google_refresh_token", value: tokens.refresh_token },
+        create: { userId, key: "google_refresh_token", value: tokens.refresh_token },
       });
     }
 

@@ -9,7 +9,8 @@ export async function GET() {
   );
 
   const scopes = [
-    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/calendar.events",
   ];
 
   const authorizationUrl = oauth2Client.generateAuthUrl({

@@ -11,7 +11,9 @@ export async function GET() {
     // Check Google Drive connection status
     let isDriveConnected = false;
     try {
-      const token = await prisma.setting.findUnique({ where: { key: "google_refresh_token" } });
+      const { getCurrentUserId } = await import("@/lib/auth");
+      const userId = await getCurrentUserId();
+      const token = await prisma.setting.findUnique({ where: { userId_key: { userId, key: "google_refresh_token" } } });
       if (token) isDriveConnected = true;
     } catch {
       // DB connection issues or table not found during initial setup

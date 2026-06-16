@@ -14,7 +14,7 @@ datasource db {
 // ─── 1. Course (Mata Kuliah) ─────────────────────────────────────
 model Course {
   id             String     @id @default(cuid())
-  name           String     @unique                  // "K3 — Keselamatan & Kesehatan Kerja"
+  name           String                              // "K3 — Keselamatan & Kesehatan Kerja"
   code           String                              // "K3-101"
   lecturer       String                              // "Dr. Pratiwi"
   room           String?                             // "Lab K3 • R.101"
@@ -29,6 +29,9 @@ model Course {
   semesterId     String?
   semester       Semester?  @relation(fields: [semesterId], references: [id], onDelete: SetNull)
 
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   notes          Note[]
   materials      Material[]
   tasks          Task[]
@@ -38,18 +41,23 @@ model Course {
   updatedAt      DateTime   @updatedAt
 
   @@map("courses")
+  @@unique([userId, name])
 }
 
 // ─── 1.5 Semester ────────────────────────────────────────────────
 model Semester {
-  id        String   @id @default(cuid())
-  name      String
-  active    Boolean  @default(false)
-  courses   Course[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  active         Boolean  @default(false)
+  gdriveFolderId String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses        Course[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("semesters")
+  @@unique([userId, name])
 }
 
 // ─── 2. Note Metadata Registry ────────────────────────────────────
@@ -148,9 +156,41 @@ model Schedule {
 // ─── 7. Settings (OAuth Tokens & App Config) ─────────────────────
 // Menyimpan refresh token Google OAuth secara aman (harus dienkripsi di app-level).
 model Setting {
-  key       String   @id                          // "google_refresh_token", "scholar_level", dll
+  id        String   @id @default(cuid())
+  key       String                                // "google_refresh_token", "scholar_level", dll
   value     String                                // Nilai (token HARUS dienkripsi sebelum disimpan)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+  @@unique([userId, key])
+}
+
+// ─── 8. Auth ─────────────────────────────────────────────────────
+model User {
+  id        String    @id @default(cuid())
+  name      String?
+  email     String    @unique
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  sessions  Session[]
+  semesters Semester[]
+  courses   Course[]
+  settings  Setting[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("sessions")
 }
