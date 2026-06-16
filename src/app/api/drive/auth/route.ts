@@ -9,15 +9,18 @@ export async function GET() {
   );
 
   const scopes = [
+    "openid",
+    "email",
+    "profile",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/calendar.events",
   ];
 
   const authorizationUrl = oauth2Client.generateAuthUrl({
-    access_type: "offline", // to get refresh token
+    access_type: "offline",
     scope: scopes,
     include_granted_scopes: true,
-    prompt: "consent", // force to show consent screen to get new refresh token
+    prompt: "consent",
   });
 
   return NextResponse.redirect(authorizationUrl);

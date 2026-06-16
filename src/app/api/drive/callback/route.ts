@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { prisma } from "@/lib/db";
+import { createToken, SESSION_COOKIE } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
-  const { getCurrentUserId } = await import("@/lib/auth");
-  const userId = await getCurrentUserId();
-  
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
 
@@ -21,19 +19,47 @@ export async function GET(request: NextRequest) {
     );
 
     const { tokens } = await oauth2Client.getToken(code);
-    
-    // In a real production app, you would ENCRYPT the refresh token before saving.
-    // We are saving it to the database so Hermes and the background sync can use it.
-    if (tokens.refresh_token) {
-      await prisma.setting.upsert({
-        where: { userId_key: { userId, key: "google_refresh_token" } },
-        update: { value: tokens.refresh_token },
-        create: { userId, key: "google_refresh_token", value: tokens.refresh_token },
+    oauth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+    const { data: profile } = await oauth2.userinfo.get();
+
+    if (!profile.email) {
+      return NextResponse.json({ error: "Google account email not available" }, { status: 400 });
+    }
+
+    let user = await prisma.user.findUnique({ where: { email: profile.email } });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: profile.email,
+          name: profile.name || profile.email.split("@")[0],
+          password: `google-oauth-${crypto.randomUUID()}`,
+        },
       });
     }
 
-    // Redirect back to dashboard with a success parameter
-    return NextResponse.redirect(new URL("/dashboard?drive=connected", request.url));
+    if (tokens.refresh_token) {
+      await prisma.setting.upsert({
+        where: { userId_key: { userId: user.id, key: "google_refresh_token" } },
+        update: { value: tokens.refresh_token },
+        create: { userId: user.id, key: "google_refresh_token", value: tokens.refresh_token },
+      });
+    }
+
+    const token = await createToken(user.id);
+    const response = NextResponse.redirect(new URL("/dashboard?drive=connected", request.url));
+    response.cookies.set({
+      name: SESSION_COOKIE,
+      value: token,
+      httpOnly: true,
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (error) {
     console.error("OAuth Callback Error:", error);
     return NextResponse.json({ error: "Authentication failed" }, { status: 500 });

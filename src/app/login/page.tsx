@@ -37,6 +37,21 @@ export default function LoginPage() {
             </div>
           )}
 
+          <a
+            href="/api/drive/auth"
+            className="mb-5 w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl text-base font-bold transition-all hover:opacity-90 active:scale-95 border"
+            style={{ background: "white", color: "var(--color-on-surface)", borderColor: "var(--color-outline-variant)" }}
+          >
+            <span className="text-lg">G</span>
+            Login with Google
+          </a>
+
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-px flex-1" style={{ background: "var(--color-outline-variant)" }} />
+            <span className="text-xs" style={{ color: "var(--color-on-surface-variant)" }}>or email</span>
+            <div className="h-px flex-1" style={{ background: "var(--color-outline-variant)" }} />
+          </div>
+
           <form action={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: "var(--color-on-surface-variant)" }}>
