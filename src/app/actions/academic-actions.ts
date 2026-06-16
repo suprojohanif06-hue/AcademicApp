@@ -15,26 +15,31 @@ export async function getSemesters() {
 }
 
 export async function createSemester(data: { name: string; active?: boolean }) {
-  const { ensureSemesterFolder, tryGoogle } = await import("@/lib/google-drive");
   const { getCurrentUserId } = await import("@/lib/auth");
   const userId = await getCurrentUserId();
-
-  let gdriveFolderId: string | undefined;
-  if (data.active ?? true) {
-    const folder = await tryGoogle(() => ensureSemesterFolder(data.name));
-    gdriveFolderId = folder?.id;
-  }
 
   const semester = await prisma.semester.create({
     data: {
       name: data.name,
       active: data.active ?? true,
-      gdriveFolderId,
       userId,
     },
   });
+  
   revalidatePath("/courses");
   revalidatePath("/dashboard");
+
+  if (data.active ?? true) {
+    import("@/lib/google-drive").then(({ ensureSemesterFolder, tryGoogle }) => {
+      tryGoogle(async () => {
+        const folder = await ensureSemesterFolder(data.name);
+        if (folder?.id) {
+          await prisma.semester.update({ where: { id: semester.id }, data: { gdriveFolderId: folder.id } });
+        }
+      }).catch(console.error);
+    });
+  }
+
   return semester;
 }
 
@@ -109,26 +114,8 @@ export async function createCourse(data: {
   credits: number;
   color: string;
 }) {
-  const { ensureCourseFolder, tryGoogle } = await import("@/lib/google-drive");
   const { getCurrentUserId } = await import("@/lib/auth");
   const userId = await getCurrentUserId();
-
-  const semester = await prisma.semester.findFirst({ where: { id: data.semesterId, userId } });
-  
-  let gdriveFolderId: string | undefined;
-  if (semester?.gdriveFolderId) {
-    const courseFolder = await tryGoogle(() => ensureCourseFolder(data.name, semester.gdriveFolderId!));
-    gdriveFolderId = courseFolder?.id;
-  } else if (semester) {
-    // Fallback if semester didn't have a folder yet
-    const { ensureSemesterFolder } = await import("@/lib/google-drive");
-    const semFolder = await tryGoogle(() => ensureSemesterFolder(semester.name));
-    if (semFolder) {
-      await prisma.semester.update({ where: { id: semester.id }, data: { gdriveFolderId: semFolder.id } });
-      const courseFolder = await tryGoogle(() => ensureCourseFolder(data.name, semFolder.id));
-      gdriveFolderId = courseFolder?.id;
-    }
-  }
 
   const course = await prisma.course.create({
     data: {
@@ -139,12 +126,36 @@ export async function createCourse(data: {
       room: data.room,
       credits: data.credits,
       color: data.color,
-      gdriveFolderId,
       userId,
     },
   });
+  
   revalidatePath("/courses");
   revalidatePath("/dashboard");
+
+  import("@/lib/google-drive").then(({ tryGoogle, ensureCourseFolder, ensureSemesterFolder }) => {
+    tryGoogle(async () => {
+      const semester = await prisma.semester.findFirst({ where: { id: data.semesterId, userId } });
+      if (!semester) return;
+      
+      let gdriveFolderId = semester.gdriveFolderId;
+      if (!gdriveFolderId) {
+        const semFolder = await ensureSemesterFolder(semester.name);
+        if (semFolder) {
+          await prisma.semester.update({ where: { id: semester.id }, data: { gdriveFolderId: semFolder.id } });
+          gdriveFolderId = semFolder.id;
+        }
+      }
+
+      if (gdriveFolderId) {
+        const courseFolder = await ensureCourseFolder(data.name, gdriveFolderId);
+        if (courseFolder?.id) {
+          await prisma.course.update({ where: { id: course.id }, data: { gdriveFolderId: courseFolder.id } });
+        }
+      }
+    }).catch(console.error);
+  });
+
   return course;
 }
 
@@ -191,19 +202,6 @@ export async function getCourseTasks(courseId: string) {
 }
 
 export async function createTask(data: { courseId: string; title: string; type: string; priority: string; status: string; dueDate: string }) {
-  const { createCalendarEvent, tryGoogle } = await import("@/lib/google-drive");
-  const course = await prisma.course.findUnique({ where: { id: data.courseId } });
-
-  let gcalEventId: string | undefined;
-  if (data.dueDate) {
-    const event = await tryGoogle(() => createCalendarEvent({
-      title: data.title,
-      dueDate: new Date(data.dueDate),
-      courseName: course?.name,
-    }));
-    gcalEventId = event?.id || undefined;
-  }
-
   const task = await prisma.task.create({
     data: {
       courseId: data.courseId,
@@ -212,12 +210,29 @@ export async function createTask(data: { courseId: string; title: string; type: 
       priority: data.priority,
       status: data.status,
       dueDate: new Date(data.dueDate),
-      gcalEventId,
     },
   });
+
   revalidatePath(`/courses/${data.courseId}`);
   revalidatePath("/dashboard");
   revalidatePath("/tasks");
+
+  if (data.dueDate) {
+    import("@/lib/google-drive").then(({ createCalendarEvent, tryGoogle }) => {
+      tryGoogle(async () => {
+        const course = await prisma.course.findUnique({ where: { id: data.courseId } });
+        const event = await createCalendarEvent({
+          title: data.title,
+          dueDate: new Date(data.dueDate),
+          courseName: course?.name,
+        });
+        if (event?.id) {
+          await prisma.task.update({ where: { id: task.id }, data: { gcalEventId: event.id } });
+        }
+      }).catch(console.error);
+    });
+  }
+
   return task;
 }
 
@@ -311,29 +326,34 @@ export async function createMaterial(data: { courseId: string; title: string; ty
 }
 
 export async function createNote(data: { courseId: string; title: string; content: string }) {
-  const { ensureCourseSubfolder, createDriveTextFile, tryGoogle } = await import("@/lib/google-drive");
-  const course = await prisma.course.findUnique({ where: { id: data.courseId } });
-
-  let gdriveFileId = `placeholder-note-id-${Date.now()}`;
-  if (course?.gdriveFolderId) {
-    const notesFolder = await tryGoogle(() => ensureCourseSubfolder(course.gdriveFolderId!, "Notes"));
-    if (notesFolder) {
-      const safeTitle = data.title.trim() ? data.title.trim() : "Untitled Note";
-      const file = await tryGoogle(() => createDriveTextFile(`${safeTitle}.md`, data.content || " ", notesFolder.id));
-      if (file?.id) gdriveFileId = file.id;
-    }
-  }
-
   const note = await prisma.note.create({
     data: {
       courseId: data.courseId,
       title: data.title,
       content: data.content,
-      gdriveFileId
+      gdriveFileId: `pending-note-sync-${Date.now()}`,
     },
   });
+
   revalidatePath(`/courses/${data.courseId}`);
   revalidatePath("/library");
+
+  import("@/lib/google-drive").then(({ ensureCourseSubfolder, createDriveTextFile, tryGoogle }) => {
+    tryGoogle(async () => {
+      const course = await prisma.course.findUnique({ where: { id: data.courseId } });
+      if (course?.gdriveFolderId) {
+        const notesFolder = await ensureCourseSubfolder(course.gdriveFolderId, "Notes");
+        if (notesFolder) {
+          const safeTitle = data.title.trim() ? data.title.trim() : "Untitled Note";
+          const file = await createDriveTextFile(`${safeTitle}.md`, data.content || " ", notesFolder.id);
+          if (file?.id) {
+            await prisma.note.update({ where: { id: note.id }, data: { gdriveFileId: file.id } });
+          }
+        }
+      }
+    }).catch(console.error);
+  });
+
   return note;
 }
 export async function updateNote(id: string, data: Partial<any>) {
