@@ -61,7 +61,8 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown OAuth callback error";
     console.error("OAuth Callback Error:", error);
-    return NextResponse.json({ error: "Authentication failed" }, { status: 500 });
+    return NextResponse.json({ error: "Authentication failed", detail: message }, { status: 500 });
   }
 }
