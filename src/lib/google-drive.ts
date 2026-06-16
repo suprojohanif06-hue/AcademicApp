@@ -10,17 +10,23 @@ export const ACADEMIC_ROOT_FOLDER = "Academic OS";
 
 type DriveFolder = { id: string; name?: string | null };
 
+async function getGoogleRefreshToken() {
+  const { getCurrentUserId } = await import("@/lib/auth");
+  const userId = await getCurrentUserId();
+  const token = await prisma.setting.findUnique({
+    where: { userId_key: { userId, key: "google_refresh_token" } },
+  });
+  return token?.value ?? null;
+}
+
 export async function hasGoogleConnection() {
-  const token = await prisma.setting.findUnique({ where: { key: "google_refresh_token" } });
-  return Boolean(token?.value);
+  return Boolean(await getGoogleRefreshToken());
 }
 
 export async function getGoogleAuthClient() {
-  const refreshTokenSetting = await prisma.setting.findUnique({
-    where: { key: "google_refresh_token" },
-  });
+  const refreshToken = await getGoogleRefreshToken();
 
-  if (!refreshTokenSetting?.value) {
+  if (!refreshToken) {
     throw new Error("Google is not connected yet.");
   }
 
@@ -30,7 +36,7 @@ export async function getGoogleAuthClient() {
     process.env.GOOGLE_REDIRECT_URI
   );
 
-  oauth2Client.setCredentials({ refresh_token: refreshTokenSetting.value });
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
   return oauth2Client;
 }
 
